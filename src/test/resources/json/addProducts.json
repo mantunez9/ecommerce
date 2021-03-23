@@ -1,0 +1,12 @@
+[
+  {
+    "amount": 500,
+    "description": "Computer",
+    "idProduct": 1
+  },
+  {
+    "amount": 10,
+    "description": "Book",
+    "idProduct": 2
+  }
+]

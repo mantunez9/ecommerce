@@ -21,7 +21,6 @@ public class TimeToLive extends TimerTask {
         this.ttl = ttl;
     }
 
-    // Clear cache.
     public void run() {
         cartRepository.delete(cart);
         log.info("The TTL is over, cached cleared!");
