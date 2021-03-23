@@ -15,6 +15,8 @@ public class CartDTO {
 
     private LocalDateTime createDate;
 
+    private Long ttl;
+
     @JsonInclude(JsonInclude.Include.NON_NULL)
     private List<ProductDTO> products;
 

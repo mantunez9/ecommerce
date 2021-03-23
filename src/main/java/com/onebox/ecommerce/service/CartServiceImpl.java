@@ -1,5 +1,6 @@
 package com.onebox.ecommerce.service;
 
+import com.onebox.ecommerce.cron.TimeToLive;
 import com.onebox.ecommerce.dto.CartDTO;
 import com.onebox.ecommerce.dto.ProductDTO;
 import com.onebox.ecommerce.dto.ResultActionCRUD;
@@ -9,9 +10,10 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Optional;
+import java.util.Timer;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @Slf4j
@@ -19,7 +21,7 @@ public class CartServiceImpl implements CartService {
 
     private final CartRepository cartRepository;
     private final ProductService productService;
-    DateTimeFormatter formatter = DateTimeFormatter.ofPattern("dd/MM/yyyy HH:mm:ss.SSSS");
+    Long ttl = TimeUnit.MINUTES.toMillis(10);
 
     public CartServiceImpl(CartRepository cartRepository, ProductService productService) {
         this.cartRepository = cartRepository;
@@ -32,13 +34,19 @@ public class CartServiceImpl implements CartService {
         try {
 
             Cart cart = new Cart();
-            cart.setCreateDate(LocalDateTime.parse(LocalDateTime.now().format(formatter), formatter));
+            cart.setCreateDate(LocalDateTime.now());
+
+            Timer t = new Timer();
+            TimeToLive timeToLive = new TimeToLive(cartRepository, cart, ttl);
+            t.schedule(timeToLive, ttl);
+
             cart = cartRepository.saveAndFlush(cart);
 
             return Optional.ofNullable(
                     CartDTO.builder()
                             .idCart(cart.getIdCart())
                             .createDate(cart.getCreateDate())
+                            .ttl(timeToLive.getTTL())
                             .build()
             );
 
@@ -54,13 +62,22 @@ public class CartServiceImpl implements CartService {
 
         Optional<Cart> optionalCart = cartRepository.findByIdCart(idCart);
 
-        return optionalCart.map(cart -> CartDTO
-                .builder()
-                .idCart(cart.getIdCart())
-                .createDate(cart.getCreateDate())
-                .products(productService.findAllProductByCart(cart))
-                .build()
-        );
+        if (optionalCart.isPresent()) {
+
+            TimeToLive timeToLive = new TimeToLive(cartRepository, optionalCart.get(), ttl);
+
+            return optionalCart.map(cart -> CartDTO
+                    .builder()
+                    .idCart(cart.getIdCart())
+                    .createDate(cart.getCreateDate())
+                    .products(productService.findAllProductByCart(cart))
+                    .ttl(timeToLive.getTTL())
+                    .build()
+            );
+
+        }
+
+        return Optional.empty();
 
     }
 
