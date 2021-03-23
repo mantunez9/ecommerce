@@ -1,6 +1,5 @@
 package com.onebox.ecommerce.config;
 
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import springfox.documentation.builders.PathSelectors;
@@ -13,13 +12,10 @@ import springfox.documentation.swagger2.annotations.EnableSwagger2;
 @EnableSwagger2
 public class SpringFoxConfig {
 
-    @Value("${swagger.host}")
-    private String swaggerHost;
-
     @Bean
     public Docket api() {
         return new Docket(DocumentationType.SWAGGER_2)
-                .host(swaggerHost)
+                .host("localhost:8070")
                 .groupName("oneBox")
                 .select()
                 .apis(RequestHandlerSelectors.any())
